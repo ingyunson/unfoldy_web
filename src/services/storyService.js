@@ -1,12 +1,11 @@
 /**
  * Unified Story Service
- * Orchestrates text + image generation with Gemini → OpenAI fallback.
+ * Orchestrates text + image generation via serverless API proxies.
  * Handles prompt construction with pacing, style consistency,
  * and full story continuity across turns.
  */
 
 import { callGeminiText, callGeminiImage } from './geminiService';
-import { callOpenAIText, callOpenAIImage } from './openaiService';
 import { PACING } from '../config/styleConfig';
 
 /**
@@ -199,6 +198,7 @@ export async function generateStoryContent(storyState) {
   console.log('═══════════════════════════════════');
   console.log(`📖 GENERATING TURN ${storyState.currentTurn}/${storyState.maxTurns}`);
   console.log(`   Genre: ${storyState.genre}`);
+  console.log(`   Language: ${storyState.language || 'English'}`);
   console.log(`   History: ${storyState.history.length} previous turns`);
   if (storyState.history.length > 0) {
     const lastChoice = storyState.history[storyState.history.length - 1].choiceMade;
@@ -207,43 +207,22 @@ export async function generateStoryContent(storyState) {
   console.log(`   Prompt length: ${prompt.length} chars`);
   console.log('═══════════════════════════════════');
 
-  let rawText;
-  let usedFallback = false;
-
-  try {
-    rawText = await callGeminiText(prompt);
-  } catch (geminiError) {
-    console.warn(`⚠ Gemini text failed: ${geminiError.message}`);
-    console.warn('   Falling back to OpenAI...');
-    usedFallback = true;
-    try {
-      rawText = await callOpenAIText(prompt);
-    } catch (openaiError) {
-      console.error('❌ Both APIs failed!');
-      console.error(`   Gemini: ${geminiError.message}`);
-      console.error(`   OpenAI: ${openaiError.message}`);
-      throw new Error(
-        `Both APIs failed. Gemini: ${geminiError.message} | OpenAI: ${openaiError.message}`
-      );
-    }
-  }
-
+  // The serverless proxy handles Gemini → OpenAI fallback
+  const rawText = await callGeminiText(prompt);
   const parsed = parseResponse(rawText);
-  parsed.usedFallback = usedFallback;
 
   console.log('───── PARSED RESULT ─────');
   console.log(`   Narrative: "${parsed.narrative.substring(0, 100)}..."`);
   console.log(`   Image prompt: "${parsed.imagePrompt.substring(0, 100)}..."`);
   console.log(`   Choices: ${parsed.choices.length}`);
   parsed.choices.forEach((c, i) => console.log(`     ${i + 1}. ${c}`));
-  console.log(`   Used fallback: ${usedFallback}`);
 
   return parsed;
 }
 
 /**
  * Generate an image with art style prepended.
- * Tries Gemini → fallback DALL-E 3.
+ * The serverless proxy handles Imagen → DALL-E fallback.
  * @param {string} imagePrompt - Scene-specific image prompt
  * @param {string} artStylePrompt - Session-locked art style
  * @returns {Promise<string>} Image URL or base64 data URI
@@ -259,18 +238,10 @@ export async function generateImage(imagePrompt, artStylePrompt) {
 
   try {
     const result = await callGeminiImage(fullPrompt);
-    console.log('✅ Image generated via Gemini');
+    console.log('✅ Image generated');
     return result;
-  } catch (geminiError) {
-    console.warn(`⚠ Gemini image failed: ${geminiError.message}`);
-    console.warn('   Falling back to OpenAI DALL-E...');
-    try {
-      const result = await callOpenAIImage(fullPrompt);
-      console.log('✅ Image generated via OpenAI DALL-E');
-      return result;
-    } catch (openaiError) {
-      console.error(`❌ Both image APIs failed: ${openaiError.message}`);
-      return null;
-    }
+  } catch (err) {
+    console.error(`❌ Image generation failed: ${err.message}`);
+    return null;
   }
 }
