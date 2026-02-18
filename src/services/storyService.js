@@ -14,7 +14,7 @@ import { PACING } from '../config/styleConfig';
  * Includes FULL history of previous turns for narrative continuity.
  */
 function buildStoryPrompt(storyState) {
-  const { currentTurn, maxTurns, genre, artStylePrompt, history } = storyState;
+  const { currentTurn, maxTurns, genre, artStylePrompt, history, language } = storyState;
   const pacingInstruction = PACING[currentTurn] || '';
   const isFinalTurn = currentTurn >= maxTurns;
 
@@ -44,6 +44,8 @@ function buildStoryPrompt(storyState) {
 
   const prompt = `You are a masterful interactive fiction Storytelling AI. You are writing a continuous, evolving story. Each new turn MUST directly continue from the previous events and the player's latest choice. Never restart, reset, or ignore previous story events.
 
+**LANGUAGE: You MUST write ALL narrative text and choices in ${language || 'English'}.**
+
 **Genre:** ${genre}
 **Visual Style:** ${artStylePrompt}
 **Current Turn:** ${currentTurn} of ${maxTurns}
@@ -57,15 +59,15 @@ ${historyContext}
 ${lastChoice}
 
 **Your Task for Turn ${currentTurn}:**
-1. Write the next story segment that DIRECTLY continues the narrative above. It must be vivid, immersive, and 100-150 words long. Write in second person ("You..."). Reference specific events, characters, and details from previous turns to maintain continuity.
-2. Create an image prompt for this scene. CRITICAL: The image prompt MUST begin with the exact phrase: "${artStylePrompt}" followed by a detailed scene description.
-${isFinalTurn ? '3. This is the FINAL turn. Write a satisfying conclusion that resolves the story threads from all previous turns. Do NOT provide any choices.' : '3. Provide exactly 3 distinct, meaningful choices for the player. Each choice should lead to a different narrative direction and be relevant to the current situation.'}
+1. Write the next story segment that DIRECTLY continues the narrative above. It must be vivid, immersive, and 100-150 words long. Write in second person ("You..."). Reference specific events, characters, and details from previous turns to maintain continuity. WRITE IN ${language || 'English'}.
+2. Create an image prompt for this scene. CRITICAL: The image prompt MUST begin with the exact phrase: "${artStylePrompt}" followed by a detailed scene description. (Image prompts should always be in English regardless of the narrative language.)
+${isFinalTurn ? '3. This is the FINAL turn. Write a satisfying conclusion that resolves the story threads from all previous turns. Do NOT provide any choices.' : `3. Provide exactly 3 distinct, meaningful choices for the player IN ${language || 'English'}. Each choice should lead to a different narrative direction and be relevant to the current situation.`}
 
 **You MUST respond in this exact JSON format (no markdown fences, no extra text):**
 {
-  "narrative": "Your story text here...",
-  "imagePrompt": "${artStylePrompt}, [detailed scene description]",
-  ${isFinalTurn ? '"choices": []' : '"choices": ["Choice 1 text", "Choice 2 text", "Choice 3 text"]'}
+  "narrative": "Your story text here in ${language || 'English'}...",
+  "imagePrompt": "${artStylePrompt}, [detailed scene description in English]",
+  ${isFinalTurn ? '"choices": []' : `"choices": ["Choice 1 in ${language || 'English'}", "Choice 2 in ${language || 'English'}", "Choice 3 in ${language || 'English'}"]`}
 }`;
 
   return prompt;

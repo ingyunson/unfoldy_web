@@ -10,6 +10,7 @@ export default function StoryTurn() {
     genreColor,
     usedFallback,
     makeChoice,
+    resetGame,
   } = useGame();
 
   const progressPercent = (currentTurn / maxTurns) * 100;
@@ -31,6 +32,13 @@ export default function StoryTurn() {
         <span className="turn-badge">
           {currentTurn}/{maxTurns}
         </span>
+        <button
+          className="quit-button"
+          onClick={resetGame}
+          title="Quit Story"
+        >
+          ✕
+        </button>
       </div>
 
       {/* Story Image */}

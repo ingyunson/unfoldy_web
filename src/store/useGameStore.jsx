@@ -13,6 +13,7 @@ const initialState = {
   gamePhase: 'menu', // 'menu' | 'playing' | 'loading' | 'epilogue'
   currentTurn: 1,
   maxTurns: MAX_TURNS,
+  language: 'English',
   genre: '',
   genreId: '',
   artStylePrompt: '',
@@ -44,6 +45,7 @@ function gameReducer(state, action) {
       return {
         ...initialState,
         gamePhase: 'loading',
+        language: action.payload.language,
         genre: action.payload.genre,
         genreId: action.payload.genreId,
         artStylePrompt: action.payload.artStylePrompt,
@@ -145,10 +147,11 @@ export function GameProvider({ children }) {
   }, [state]);
 
   const startGame = useCallback(
-    (genreData) => {
+    (genreData, language) => {
       dispatch({
         type: ACTIONS.START_GAME,
         payload: {
+          language,
           genre: genreData.name,
           genreId: genreData.id,
           artStylePrompt: genreData.artStylePrompt,

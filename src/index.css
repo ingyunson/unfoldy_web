@@ -135,6 +135,76 @@ body {
   letter-spacing: 0.02em;
 }
 
+/* Language Selector */
+.language-selector {
+  margin-top: 20px;
+}
+
+.language-dropdown {
+  appearance: none;
+  -webkit-appearance: none;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 10px 36px 10px 16px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%239a9ab0' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  min-width: 140px;
+  text-align: center;
+}
+
+.language-dropdown:hover {
+  border-color: var(--border-hover);
+  background-color: var(--bg-glass-strong);
+}
+
+.language-dropdown:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-soft);
+}
+
+.language-dropdown option {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  padding: 8px;
+}
+
+/* Quit Button */
+.quit-button {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+
+.quit-button:hover {
+  background: rgba(255, 23, 68, 0.1);
+  border-color: rgba(255, 23, 68, 0.4);
+  color: #ff6e80;
+}
+
+.quit-button:active {
+  background: rgba(255, 23, 68, 0.2);
+}
+
 .genre-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

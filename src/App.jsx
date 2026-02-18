@@ -11,6 +11,7 @@ function App() {
     gamePhase,
     currentTurn,
     maxTurns,
+    language,
     genre,
     artStylePrompt,
     history,
@@ -30,6 +31,7 @@ function App() {
       const storyState = {
         currentTurn,
         maxTurns,
+        language,
         genre,
         artStylePrompt,
         history,
@@ -58,7 +60,7 @@ function App() {
       console.error('Turn generation failed:', err);
       setError(err.message);
     }
-  }, [currentTurn, maxTurns, genre, artStylePrompt, history, setTurnContent, setError]);
+  }, [currentTurn, maxTurns, language, genre, artStylePrompt, history, setTurnContent, setError]);
 
   // Trigger generation when entering loading state
   useEffect(() => {
