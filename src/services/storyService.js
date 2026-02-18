@@ -72,8 +72,47 @@ ${isFinalTurn ? '3. This is the FINAL turn. Write a satisfying conclusion that r
 }
 
 /**
+ * Extract a string field from raw (potentially malformed) JSON text.
+ * Handles unescaped quotes inside values by finding field boundaries.
+ */
+function extractField(text, fieldName) {
+  // Match "fieldName": " then capture everything until we find the closing pattern
+  // The closing pattern is either ", followed by another field/end, or "} or "]
+  const patterns = [
+    // Try: "field": "value" followed by comma or closing brace
+    new RegExp(`"${fieldName}"\\s*:\\s*"([\\s\\S]*?)"\\s*(?:,\\s*"(?:narrative|imagePrompt|choices)|\\s*\\}|\\s*$)`)
+  ];
+
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (match) return match[1].trim();
+  }
+
+  return null;
+}
+
+/**
+ * Extract the choices array from raw (potentially malformed) JSON text.
+ */
+function extractChoices(text) {
+  // Find the choices array
+  const choicesMatch = text.match(/"choices"\s*:\s*\[([\s\S]*?)\]/);
+  if (!choicesMatch) return [];
+
+  // Extract individual quoted strings from the array
+  const items = [];
+  const regex = /"([^"]+)"/g;
+  let m;
+  while ((m = regex.exec(choicesMatch[1])) !== null) {
+    items.push(m[1].trim());
+  }
+  return items.slice(0, 3);
+}
+
+/**
  * Parse the AI response text into structured data.
- * Handles various response formats and extracts the JSON.
+ * Uses multiple strategies to handle malformed JSON from AI responses,
+ * including unescaped quotes and truncated output.
  */
 function parseResponse(rawText) {
   let jsonStr = rawText.trim();
@@ -90,18 +129,57 @@ function parseResponse(rawText) {
     jsonStr = objectMatch[0];
   }
 
+  // ── Strategy 1: Direct JSON.parse ──
   try {
     const parsed = JSON.parse(jsonStr);
+    console.log('✅ JSON parsed successfully (direct)');
     return {
       narrative: parsed.narrative || 'The story continues...',
       imagePrompt: parsed.imagePrompt || '',
       choices: Array.isArray(parsed.choices) ? parsed.choices.slice(0, 3) : [],
     };
   } catch (e) {
-    console.warn('⚠ Failed to parse JSON response:', e.message);
-    console.warn('   Raw text:', rawText.substring(0, 500));
+    console.warn('⚠ Direct JSON.parse failed:', e.message);
+  }
+
+  // ── Strategy 2: Regex-based field extraction ──
+  // This handles unescaped quotes inside values
+  console.log('   Attempting regex-based field extraction...');
+  const narrative = extractField(jsonStr, 'narrative');
+  const imagePrompt = extractField(jsonStr, 'imagePrompt');
+  const choices = extractChoices(jsonStr);
+
+  if (narrative) {
+    console.log('✅ Extracted fields via regex');
+    console.log(`   Narrative: "${narrative.substring(0, 80)}..."`);
     return {
-      narrative: rawText.substring(0, 500),
+      narrative,
+      imagePrompt: imagePrompt || '',
+      choices: choices.length > 0 ? choices : [],
+    };
+  }
+
+  // ── Strategy 3: Last resort — clean up and retry parse ──
+  console.warn('   Regex extraction failed, attempting JSON repair...');
+  try {
+    // Try to fix common issues: replace unescaped internal quotes
+    let repaired = jsonStr
+      .replace(/(?<=:\s*")([\s\S]*?)(?="\s*[,}])/g, (match) => {
+        // Escape any unescaped internal double quotes
+        return match.replace(/(?<!\\)"/g, '\\"');
+      });
+    const parsed = JSON.parse(repaired);
+    console.log('✅ JSON parsed after repair');
+    return {
+      narrative: parsed.narrative || 'The story continues...',
+      imagePrompt: parsed.imagePrompt || '',
+      choices: Array.isArray(parsed.choices) ? parsed.choices.slice(0, 3) : [],
+    };
+  } catch (e2) {
+    console.error('❌ All parse strategies failed');
+    console.error('   Raw text:', rawText.substring(0, 500));
+    return {
+      narrative: rawText.replace(/[{}"]/g, '').substring(0, 500),
       imagePrompt: '',
       choices: ['Continue forward', 'Look around', 'Take a different path'],
     };
