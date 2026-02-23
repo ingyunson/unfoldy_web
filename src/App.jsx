@@ -5,6 +5,7 @@ import GenreSelect from './components/GenreSelect';
 import StoryTurn from './components/StoryTurn';
 import LoadingOverlay from './components/LoadingOverlay';
 import Epilogue from './components/Epilogue';
+import SplashScreen from './components/SplashScreen';
 
 function App() {
   const {
@@ -90,6 +91,7 @@ function App() {
       )}
 
       {/* Screen Router */}
+      {gamePhase === 'splash' && <SplashScreen />}
       {gamePhase === 'menu' && <GenreSelect />}
       {gamePhase === 'loading' && <LoadingOverlay />}
       {gamePhase === 'playing' && <StoryTurn />}

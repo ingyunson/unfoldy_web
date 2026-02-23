@@ -10,7 +10,7 @@ const STORAGE_KEY = 'unfoldy-game-state';
 
 // ─── Initial State ───────────────────────────────────
 const initialState = {
-  gamePhase: 'menu', // 'menu' | 'playing' | 'loading' | 'epilogue'
+  gamePhase: 'splash', // 'splash' | 'menu' | 'playing' | 'loading' | 'epilogue'
   currentTurn: 1,
   maxTurns: MAX_TURNS,
   language: 'English',
@@ -29,6 +29,7 @@ const initialState = {
 
 // ─── Actions ─────────────────────────────────────────
 const ACTIONS = {
+  DISMISS_SPLASH: 'DISMISS_SPLASH',
   START_GAME: 'START_GAME',
   SET_LOADING: 'SET_LOADING',
   SET_TURN_CONTENT: 'SET_TURN_CONTENT',
@@ -41,6 +42,9 @@ const ACTIONS = {
 // ─── Reducer ─────────────────────────────────────────
 function gameReducer(state, action) {
   switch (action.type) {
+    case ACTIONS.DISMISS_SPLASH:
+      return { ...state, gamePhase: 'menu' };
+
     case ACTIONS.START_GAME:
       return {
         ...initialState,
@@ -194,6 +198,10 @@ export function GameProvider({ children }) {
     dispatch({ type: ACTIONS.RESET_GAME });
   }, []);
 
+  const dismissSplash = useCallback(() => {
+    dispatch({ type: ACTIONS.DISMISS_SPLASH });
+  }, []);
+
   return (
     <GameContext.Provider
       value={{
@@ -204,6 +212,7 @@ export function GameProvider({ children }) {
         setError,
         setLoading,
         resetGame,
+        dismissSplash,
       }}
     >
       {children}
